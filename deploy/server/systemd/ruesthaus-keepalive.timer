@@ -1,0 +1,13 @@
+[Unit]
+Description=Rüsthaus-App: Supabase zweimal pro Woche anfragen
+
+[Timer]
+# Montag und Donnerstag um 5 Uhr. Supabase pausiert Gratis-Projekte nach
+# etwa 7 Tagen ohne Aktivität – zwei Aufrufe pro Woche lassen Puffer,
+# falls ein Lauf ausfällt. Nur wöchentlich: OnCalendar=Mon *-*-* 05:00:00
+OnCalendar=Mon,Thu *-*-* 05:00:00
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,23 @@
+# Konfiguration der Rüsthaus-App auf dem Server
+# Ablage: /etc/ruesthaus/ruesthaus.conf  (Rechte 640, Besitzer root:ruesthaus)
+
+# --- Automatische Updates von GitHub ---------------------------------
+# Repository im Format Besitzer/Name, z. B. "pfadfinder-rosstal/ruesthaus-app"
+GITHUB_REPO="BESITZER/REPOSITORY"
+
+# Nur bei PRIVATEM Repository nötig: Fine-grained Personal Access Token
+# mit Zugriff nur auf dieses Repository und dem Recht "Contents: Read-only".
+GITHUB_TOKEN=""
+
+# Zielordner, aus dem nginx die App ausliefert
+TARGET_DIR="/var/www/ruesthaus"
+
+# Pfad, unter dem die App erreichbar ist ("/" = eigene Subdomain, "/ruesthaus/" = Unterordner).
+# Ein Release, das für einen anderen Pfad gebaut wurde, wird nicht installiert.
+EXPECTED_BASE="/"
+
+# --- Supabase aktiv halten ----------------------------------------------
+# Werte aus Supabase → Project Settings → API (öffentlicher Publishable-/Anon-Key,
+# NICHT den Secret-/service_role-Key eintragen)
+SUPABASE_URL="https://twbxdhtomzhfxaahnobe.supabase.co"
+SUPABASE_KEY="sb_publishable_yBdY-BEDRa-NxrjxCyDGgg_9WvsCVX0"

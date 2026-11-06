@@ -1,0 +1,12 @@
+[Unit]
+Description=Rüsthaus-App: täglich auf neue Version prüfen
+
+[Timer]
+# Täglich um 4 Uhr (mit bis zu 30 Minuten Zufallsverzögerung)
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=30m
+# Verpasste Läufe (Server war aus) beim nächsten Start nachholen
+Persistent=true
+
+[Install]
+WantedBy=timers.target

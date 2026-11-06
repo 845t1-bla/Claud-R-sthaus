@@ -1,0 +1,20 @@
+.product-card {
+  cursor: pointer;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mantine-shadow-md);
+}
+.clickable-row {
+  cursor: pointer;
+}
+.cancelled-row td {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

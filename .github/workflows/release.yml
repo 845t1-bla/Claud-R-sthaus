@@ -1,0 +1,80 @@
+# Baut bei jedem Push auf "main" die App und veröffentlicht sie als GitHub-Release.
+# Der Server prüft täglich das neueste Release und installiert es automatisch
+# (siehe deploy/server/ und deploy/ANLEITUNG-SERVER.md).
+#
+# Einmalig im Repository einstellen (Settings → Secrets and variables → Actions → Variables):
+#   VITE_SUPABASE_URL       z. B. https://xxxx.supabase.co
+#   VITE_SUPABASE_ANON_KEY  Publishable-/Anon-Key aus Supabase
+#   APP_BASE                optional, nur bei Unterordner, z. B. /ruesthaus/
+
+name: Release bauen
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      APP_BASE: ${{ vars.APP_BASE || '/' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Zugangsdaten prüfen
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Repository-Variablen VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY fehlen (Settings → Secrets and variables → Actions → Variables)."
+            exit 1
+          fi
+
+      - name: Versionsnummer festlegen
+        run: echo "TAG=v$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: App bauen
+        run: VITE_APP_VERSION="$TAG" npm run build
+
+      - name: Paket schnüren
+        run: |
+          mkdir -p paket/ruesthaus-web
+          cp -r dist/. paket/ruesthaus-web/
+          rm -f paket/ruesthaus-web/_redirects
+          cp deploy/ANLEITUNG-SERVER.md deploy/*.conf paket/
+          cp -r deploy/server paket/server
+          {
+            echo "Ruesthaus-App - Webpaket"
+            echo "Version:        $TAG"
+            echo "Gebaut am:      $(date -u '+%d.%m.%Y %H:%M') UTC"
+            echo "Pfad (APP_BASE): $APP_BASE"
+            echo "Supabase:       $VITE_SUPABASE_URL"
+            echo "Commit:         ${GITHUB_SHA::7}"
+          } > paket/VERSION.txt
+          (cd paket && zip -qr ../ruesthaus-web.zip .)
+
+      - name: Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          printf 'Automatisch gebaut aus %s.\n\n%s\n' "${GITHUB_SHA::7}" "${COMMIT_MSG:-manuell gestartet}" > notes.txt
+          gh release create "$TAG" ruesthaus-web.zip --title "Rüsthaus-App $TAG" --notes-file notes.txt
